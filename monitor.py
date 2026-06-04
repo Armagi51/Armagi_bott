@@ -3,6 +3,8 @@ import time
 import schedule
 from datetime import datetime
 import logging
+import json
+import re
 
 TELEGRAM_TOKEN = "7535762489:AAHzzcXt5PxNZ4vpbVuiFb3CYvmErWcD8m4"
 CHAT_ID = "5271405408"
@@ -22,26 +24,12 @@ def send_telegram(msg):
     except Exception as e:
         log.error(f"Ошибка: {e}")
 
-def check_nbbet():
+def get_nbbet_matches():
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get("https://nb-bet.com/ru/football", headers=headers, timeout=15)
-        log.info(f"NB-Bet статус: {r.status_code}")
-        send_telegram(f"✅ NB-Bet проверен {datetime.now().strftime('%H:%M')}")
-    except Exception as e:
-        log.error(f"NB-Bet ошибка: {e}")
-
-def run_checks():
-    log.info(f"Проверка {datetime.now().strftime('%H:%M')}")
-    check_nbbet()
-
-def main():
-    send_telegram("🚀 <b>Betting Monitor запущен!</b>")
-    run_checks()
-    schedule.every(CHECK_INTERVAL).minutes.do(run_checks)
-    while True:
-        schedule.run_pending()
-        time.sleep(30)
-
-if __name__ == "__main__":
-    main()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Referer": "https://nb-bet.com/ru/football"
+        }
+        r = requests.get(
+            "https://n
