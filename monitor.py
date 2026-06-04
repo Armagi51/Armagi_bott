@@ -10,7 +10,6 @@ CHECK_INTERVAL = 15
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-sent_signals = set()
 
 def send_telegram(msg):
     try:
@@ -24,26 +23,38 @@ def send_telegram(msg):
 
 def check_nbbet():
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get("https://nb-bet.com/ru/football", headers=headers, timeout=15)
-        log.info(f"NB-Bet статус: {r.status_code}")
-        # Ищем данные о коэффициентах в HTML
-        text = r.text
-        # Находим матчи и их коэффициенты
-        import re
-        matches = re.findall(r'"name":"([^"]+)".*?"odds":\[(.*?)\]', text)
-        log.info(f"Найдено матчей: {len(matches)}")
-        send_telegram(f"✅ NB-Bet проверен {datetime.now().strftime('%H:%M')}\nМатчей найдено: {len(matches)}")
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json"
+        }
+        # Пробуем разные API endpoints
+        urls = [
+            "https://nb-bet.com/api/v1/events?sport=football",
+            "https://nb-bet.com/api/events?sport=1",
+            "https://nb-bet.com/api/matches?sport=football",
+            "https://nb-bet.com/ru/api/events",
+        ]
+        for url in urls:
+            r = requests.get(url, headers=headers, timeout=10)
+            log.info(f"URL: {url} -> {r.status_code}")
+            if r.status_code == 200:
+                try:
+                    data = r.json()
+                    count = len(data) if isinstance(data, list) else len(data.get("events", data.get("matches", data.get("data", []))))
+                    send_telegram(f"✅ API найден!\nURL: {url}\nМатчей: {count}")
+                    return
+                except:
+                    send_telegram(f"✅ URL работает но не JSON:\n{url}\n{r.text[:200]}")
+                    return
+        send_telegram("⚠️ Ни один API endpoint не работает — нужно искать другой подход")
     except Exception as e:
-        log.error(f"NB-Bet ошибка: {e}")
-        send_telegram(f"⚠️ Ошибка NB-Bet: {e}")
+        send_telegram(f"❌ Ошибка: {e}")
 
 def run_checks():
-    log.info(f"Проверка {datetime.now().strftime('%H:%M')}")
     check_nbbet()
 
 def main():
-    send_telegram("🚀 <b>Betting Monitor v2 запущен!</b>")
+    send_telegram("🔍 <b>Ищем API NB-Bet...</b>")
     run_checks()
     schedule.every(CHECK_INTERVAL).minutes.do(run_checks)
     while True:
