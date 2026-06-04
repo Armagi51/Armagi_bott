@@ -1,3 +1,2 @@
-aiogram
-selenium
-webdriver-manager
+requests
+schedule
