@@ -10,8 +10,6 @@ CHECK_INTERVAL = 15
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-sent_signals = set()
-odds_history = {}
 
 def send_telegram(msg):
     try:
@@ -23,50 +21,33 @@ def send_telegram(msg):
     except Exception as e:
         log.error(f"Ошибка: {e}")
 
-def get_flashscore_odds(match_id):
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json",
-            "x-fsign": "SW9D1eZo"
-        }
-        r = requests.get(
-            f"https://2.fn.sportradar.com/common/en/Etc:UTC/gismo/match_info/{match_id}",
-            headers=headers, timeout=10
-        )
-        if r.status_code == 200:
-            return r.json()
-    except Exception as e:
-        log.error(f"Ошибка: {e}")
-    return None
-
 def get_matches():
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json",
-            "x-fsign": "SW9D1eZo"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept": "*/*",
+            "Accept-Language": "ru,en;q=0.9",
+            "Origin": "https://www.flashscore.com",
+            "Referer": "https://www.flashscore.com/football/",
         }
         r = requests.get(
-            "https://d.flashscore.com/x/feed/f_1_0_1_ru_1",
+            "https://www.flashscore.com/football/",
             headers=headers, timeout=15
         )
-        log.info(f"Flashscore статус: {r.status_code}, размер: {len(r.text)}")
-        if r.status_code == 200:
-            send_telegram(f"✅ Flashscore работает!\nРазмер данных: {len(r.text)} байт\nПервые 300 символов:\n{r.text[:300]}")
-            return r.text
-        else:
-            send_telegram(f"⚠️ Статус: {r.status_code}")
+        log.info(f"Статус: {r.status_code}, размер: {len(r.text)}")
+        send_telegram(
+            f"✅ Flashscore статус: {r.status_code}\n"
+            f"Размер: {len(r.text)} байт\n"
+            f"Первые 500 символов:\n{r.text[:500]}"
+        )
     except Exception as e:
         send_telegram(f"❌ Ошибка: {e}")
-    return None
 
 def run_checks():
-    log.info(f"Проверка {datetime.now().strftime('%H:%M')}")
     get_matches()
 
 def main():
-    send_telegram("🔍 <b>Тест Flashscore...</b>")
+    send_telegram("🔍 <b>Тест Flashscore v2...</b>")
     run_checks()
     schedule.every(CHECK_INTERVAL).minutes.do(run_checks)
     while True:
