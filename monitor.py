@@ -31,12 +31,14 @@ def get_matches():
             "Referer": "https://www.flashscore.com/football/",
         }
         r = requests.get(
-            "https://www.flashscore.com/football/",
-            headers=headers, timeout=15
+            "https://d.flashscore.com/x/feed/f_1_0_1_ru_1",
+            headers=headers,
+            timeout=15
         )
         log.info(f"Статус: {r.status_code}, размер: {len(r.text)}")
         send_telegram(
-            f"✅ Flashscore статус: {r.status_code}\n"
+            f"✅ Flashscore API\n"
+            f"Статус: {r.status_code}\n"
             f"Размер: {len(r.text)} байт\n"
             f"Первые 500 символов:\n{r.text[:500]}"
         )
@@ -47,7 +49,7 @@ def run_checks():
     get_matches()
 
 def main():
-    send_telegram("🔍 <b>Тест Flashscore v2...</b>")
+    send_telegram("🔍 <b>Тест Flashscore API v3...</b>")
     run_checks()
     schedule.every(CHECK_INTERVAL).minutes.do(run_checks)
     while True:
